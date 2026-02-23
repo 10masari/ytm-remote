@@ -1,138 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>YTM Remote Control</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  input[type=range] { -webkit-appearance: none; appearance: none; height: 3px; border-radius: 99px; outline: none; background: #1e1e1e; }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #f0f0f0; cursor: pointer; }
-  .conn-pulse { animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .spinner { width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YTM Remote Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0a0a0a; color: #f0f0f0; font-family: sans-serif; overflow: hidden; }
+        .brand-text { color: #ff2d2d; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.875rem; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: #1e1e1e; height: 4px; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ff2d2d; cursor: pointer; }
+        .glass-card { background: #141414; border: 1px solid #2a2a2a; border-radius: 1.5rem; }
+    </style>
 </head>
-<body class="bg-[#0a0a0a] text-[#f0f0f0] font-sans overflow-hidden">
+<body>
 
-<div id="setup-screen" class="flex flex-col items-center justify-center h-dvh px-8 gap-6">
-  <div class="text-[#ff2d2d] text-sm tracking-[0.2em] uppercase">YTM Remote</div>
-  <div class="text-4xl font-bold text-center leading-tight">Connect to<br>YouTube Music</div>
-  <div class="w-full max-w-sm bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 flex flex-col gap-4">
-    <div id="pair-code-display" class="hidden bg-[#1e1e1e] border border-[#ff2d2d] rounded-xl p-4 text-center">
-      <div class="text-3xl text-[#ff2d2d] font-bold tracking-[0.3em]" id="pair-code-text">------</div>
-      <div class="text-sm text-[#888] mt-1 text-center">Click "Allow" on your Computer</div>
+    <div id="setup-screen" class="flex flex-col items-center justify-center h-screen px-8 gap-6">
+        <div class="brand-text">YTM Remote</div>
+        <h1 class="text-4xl font-bold text-center">Connect to Desktop</h1>
+        
+        <div class="glass-card w-full p-6 flex flex-col gap-4 shadow-2xl">
+            <div id="pair-code-display" class="hidden bg-[#1e1e1e] border border-[#ff2d2d] rounded-xl p-4 text-center">
+                <div id="pair-code-text" class="text-4xl font-mono font-bold text-[#ff2d2d] tracking-[0.2em]">------</div>
+                <p class="text-xs text-gray-500 mt-2">Check your computer for a popup</p>
+            </div>
+            
+            <p id="setup-status" class="text-sm text-center text-gray-500 italic">Ready to pair</p>
+            
+            <button id="connect-btn" class="bg-[#ff2d2d] text-white font-bold py-4 rounded-xl active:scale-95 transition-transform uppercase tracking-widest">
+                Connect Now
+            </button>
+        </div>
     </div>
-    <div class="text-sm text-center min-h-[1.4em]" id="setup-status">
-      <span class="text-[#666]">Tap Connect to begin</span>
-    </div>
-    <button id="connect-btn" class="bg-[#ff2d2d] text-white text-lg font-bold uppercase tracking-wide rounded-xl py-3 w-full flex items-center justify-center gap-2 active:opacity-80 transition-all">Connect</button>
-  </div>
-</div>
 
-<div id="remote-screen" class="hidden flex-col h-dvh">
-  <div class="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
-    <div class="text-[#ff2d2d] text-sm tracking-[0.15em] uppercase">YTM Remote</div>
-    <div class="flex items-center gap-2 text-sm text-[#666]">
-      <div id="conn-dot" class="w-2 h-2 rounded-full bg-green-500 conn-pulse"></div>
-      <span>Connected</span>
+    <div id="remote-screen" class="hidden flex-col h-screen">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-[#2a2a2a]">
+            <div class="brand-text">YTM Remote</div>
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span class="text-xs text-gray-500 uppercase">Live</span>
+            </div>
+        </div>
+
+        <div class="relative flex-1 flex items-center justify-center p-8">
+            <div id="cover-bg" class="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 transition-all duration-700"></div>
+            <img id="cover-img" src="" class="z-10 w-full aspect-square object-cover rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#2a2a2a]">
+        </div>
+
+        <div class="px-8 pb-12 flex flex-col gap-6">
+            <div class="text-center">
+                <h2 id="track-title" class="text-2xl font-bold truncate">Nothing Playing</h2>
+                <p id="track-artist" class="text-gray-400 text-lg">—</p>
+            </div>
+
+            <div class="flex items-center justify-center gap-10">
+                <button id="prev-btn" class="text-3xl active:text-[#ff2d2d]">⏮</button>
+                <button id="play-btn" class="w-20 h-20 bg-[#ff2d2d] rounded-full flex items-center justify-center text-4xl shadow-lg active:scale-90 transition-transform">
+                    <span id="play-pause-icon">⏯</span>
+                </button>
+                <button id="next-btn" class="text-3xl active:text-[#ff2d2d]">⏭</button>
+            </div>
+
+            <div class="flex items-center gap-4 mt-2">
+                <span class="text-sm opacity-50">🔈</span>
+                <input type="range" id="vol-slider" min="0" max="100" value="50">
+                <span class="text-sm opacity-50">🔊</span>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="relative flex-1 flex items-center justify-center p-8 overflow-hidden">
-    <div id="cover-bg" class="absolute inset-0 bg-cover bg-center scale-125 blur-[30px] brightness-[0.25] transition-all duration-500"></div>
-    <img id="cover-img" src="" class="z-10 max-h-full max-w-full aspect-square object-cover rounded-2xl shadow-2xl">
-  </div>
-  <div class="px-4 pt-3 pb-6 flex flex-col gap-4 bg-[#0a0a0a] z-20">
-    <div>
-      <div id="track-title" class="text-xl font-bold truncate">Not Playing</div>
-      <div id="track-artist" class="text-base text-[#888] truncate">—</div>
-    </div>
-    <div class="flex items-center justify-center gap-8 py-2">
-      <button id="prev-btn" class="p-2"><svg width="32" height="32" viewBox="0 0 24 24" fill="white"><polygon points="19 20 9 12 19 4 19 20"/><rect x="5" y="5" width="2" height="14"/></svg></button>
-      <button id="play-btn" class="w-16 h-16 rounded-full bg-[#ff2d2d] flex items-center justify-center shadow-lg">
-        <svg id="play-icon" width="26" height="26" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        <svg id="pause-icon" width="26" height="26" viewBox="0 0 24 24" fill="white" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-      </button>
-      <button id="next-btn" class="p-2"><svg width="32" height="32" viewBox="0 0 24 24" fill="white"><polygon points="5 4 15 12 5 20 5 4"/><rect x="17" y="5" width="2" height="14"/></svg></button>
-    </div>
-    <div class="flex items-center gap-3">
-      <span class="text-sm">🔊</span>
-      <input type="range" id="vol-slider" min="0" max="100" value="50" class="w-full">
-    </div>
-  </div>
-</div>
 
 <script>
-// --- IMPORTANT: UPDATE THIS URL ---
-const BASE_URL = 'https://bright-rockets-try.loca.lt'; 
+    // --- 1. CONFIGURATION ---
+    const BASE_URL = 'https://bright-rockets-try.loca.lt'; 
+    const APP_ID = 'ytm-remote-web';
+    let token = localStorage.getItem('ytm_token') || '';
+    let isDraggingVol = false;
 
-const APP_ID = 'ytmremoteweb';
-let token = localStorage.getItem('ytm_token') || '';
+    // --- 2. API CALLER ---
+    async function api(method, path, body) {
+        // Automatically adds /api/v1 to the path
+        const url = `${BASE_URL.replace(/\/+$/, '')}/api/v1${path.startsWith('/') ? path : '/' + path}`;
+        
+        const opts = { 
+            method, 
+            headers: { 
+                'Content-Type': 'application/json',
+                'Bypass-Tunnel-Reminder': 'true' // <--- CRITICAL FIX
+            } 
+        };
+        
+        if (token) opts.headers['Authorization'] = token;
+        if (body) opts.body = JSON.stringify(body);
 
-async function api(method, path, body) {
-  const url = BASE_URL.replace(/\/+$/, '') + (path.startsWith('/') ? path : '/' + path);
-  const opts = { 
-    method, 
-    headers: { 
-      'Content-Type': 'application/json',
-      'Bypass-Tunnel-Reminder': 'true' // <--- THIS FIXES THE "FAILED TO FETCH" ERROR
-    } 
-  };
-  if (token) opts.headers['Authorization'] = token;
-  if (body) opts.body = JSON.stringify(body);
-
-  const res = await fetch(url, opts);
-  if (!res.ok) throw new Error(`Status ${res.status}`);
-  const t = await res.text();
-  return t ? JSON.parse(t) : {};
-}
-
-const $ = id => document.getElementById(id);
-const cmd = (command, data) => api('POST', '/api/v1/command', { command, data }).catch(() => {});
-
-$('connect-btn').onclick = async () => {
-  $('setup-status').textContent = 'Requesting Code...';
-  try {
-    const { code } = await api('POST', '/api/v1/auth/requestcode', { appId: APP_ID, appName: 'YTM Remote', appVersion: '1.0.0' });
-    $('pair-code-text').textContent = code;
-    $('pair-code-display').classList.remove('hidden');
-    const { token: t } = await api('POST', '/api/v1/auth/request', { appId: APP_ID, code });
-    if (t) { token = t; localStorage.setItem('ytm_token', token); location.reload(); }
-  } catch(e) { $('setup-status').textContent = 'Error: ' + e.message; }
-};
-
-async function poll() {
-  try {
-    const s = await api('GET', '/api/v1/state');
-    const p = s.player || {}; const v = s.video || {};
-    $('track-title').textContent = v.title || 'Not Playing';
-    $('track-artist').textContent = v.author || '—';
-    if (v.thumbnails?.length) {
-      const url = v.thumbnails[v.thumbnails.length-1].url;
-      $('cover-img').src = url;
-      $('cover-bg').style.backgroundImage = `url(${url})`;
+        const res = await fetch(url, opts);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const text = await res.text();
+        return text ? JSON.parse(text) : {};
     }
-    const isPlaying = p.trackState === 1;
-    $('play-icon').classList.toggle('hidden', isPlaying);
-    $('pause-icon').classList.toggle('hidden', !isPlaying);
-    if (!volDragging) $('vol-slider').value = p.volume || 50;
-    setTimeout(poll, 2000);
-  } catch(e) { setTimeout(poll, 5000); }
-}
 
-if (token) {
-  $('setup-screen').classList.add('hidden');
-  $('remote-screen').classList.remove('hidden');
-  $('remote-screen').classList.add('flex');
-  poll();
-}
+    const $ = id => document.getElementById(id);
 
-$('play-btn').onclick = () => cmd('playPause');
-$('prev-btn').onclick = () => cmd('previous');
-$('next-btn').onclick = () => cmd('next');
-$('vol-slider').oninput = () => { volDragging = true; };
-$('vol-slider').onchange = (e) => { volDragging = false; cmd('setVolume', +e.target.value); };
+    // --- 3. PAIRING LOGIC ---
+    $('connect-btn').onclick = async () => {
+        $('setup-status').textContent = 'Connecting...';
+        try {
+            const { code } = await api('POST', '/auth/requestcode', { 
+                appId: APP_ID, 
+                appName: 'Web Remote', 
+                appVersion: '1.0.0' 
+            });
+            
+            $('pair-code-text').textContent = code;
+            $('pair-code-display').classList.remove('hidden');
+            $('connect-btn').classList.add('hidden');
+            $('setup-status').textContent = 'Waiting for your approval...';
+
+            const { token: receivedToken } = await api('POST', '/auth/request', { appId: APP_ID, code });
+            
+            if (receivedToken) {
+                token = receivedToken;
+                localStorage.setItem('ytm_token', token);
+                location.reload();
+            }
+        } catch (e) {
+            $('setup-status').textContent = 'Failed to connect. Is YTM open?';
+            $('connect-btn').classList.remove('hidden');
+        }
+    };
+
+    // --- 4. DATA POLLING ---
+    async function poll() {
+        try {
+            const state = await api('GET', '/state');
+            const v = state.video || {};
+            const p = state.player || {};
+
+            $('track-title').textContent = v.title || 'No Song';
+            $('track-artist').textContent = v.author || '—';
+            
+            if (v.thumbnails?.length) {
+                const img = v.thumbnails[v.thumbnails.length - 1].url;
+                $('cover-img').src = img;
+                $('cover-bg').style.backgroundImage = `url(${img})`;
+            }
+
+            if (!isDraggingVol) $('vol-slider').value = p.volume || 50;
+
+            setTimeout(poll, 2000);
+        } catch (e) {
+            setTimeout(poll, 5000);
+        }
+    }
+
+    // --- 5. CONTROLS ---
+    const sendCmd = (c) => api('POST', '/command', { command: c }).catch(() => {});
+
+    $('play-btn').onclick = () => sendCmd('playPause');
+    $('prev-btn').onclick = () => sendCmd('previous');
+    $('next-btn').onclick = () => sendCmd('next');
+    
+    $('vol-slider').oninput = () => { isDraggingVol = true; };
+    $('vol-slider').onchange = (e) => { 
+        isDraggingVol = false; 
+        api('POST', '/command', { command: 'setVolume', data: parseInt(e.target.value) });
+    };
+
+    // Auto-start if already paired
+    if (token) {
+        $('setup-screen').classList.add('hidden');
+        $('remote-screen').classList.remove('hidden');
+        $('remote-screen').classList.add('flex');
+        poll();
+    }
 </script>
 </body>
 </html>
