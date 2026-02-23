@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>YTM Remote</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0a0a0a] text-white font-sans overflow-hidden">
@@ -20,6 +21,8 @@
     </div>
 
     <div id="remote-screen" class="hidden flex-col h-screen p-6 text-center">
+        <div id="timer-status" class="hidden text-[#ff2d2d] text-xs font-bold mb-2 animate-pulse">TIMER ACTIVE</div>
+        
         <div class="flex-1 flex flex-col items-center justify-center gap-6">
             <img id="cover" class="w-64 h-64 rounded-2xl shadow-2xl border border-gray-800" src="">
             <div>
@@ -27,6 +30,13 @@
                 <p id="artist" class="text-gray-400">—</p>
             </div>
         </div>
+
+        <div class="flex justify-center gap-4 mb-8">
+            <button onclick="setTimer(15)" class="text-[10px] border border-gray-700 px-3 py-1 rounded-full text-gray-400 active:bg-gray-800">15m</button>
+            <button onclick="setTimer(30)" class="text-[10px] border border-gray-700 px-3 py-1 rounded-full text-gray-400 active:bg-gray-800">30m</button>
+            <button onclick="clearTimer()" id="cancel-timer" class="hidden text-[10px] border border-[#ff2d2d] px-3 py-1 rounded-full text-[#ff2d2d]">Cancel</button>
+        </div>
+
         <div class="flex justify-center items-center gap-10 pb-12">
             <button id="prev" class="text-3xl">⏮</button>
             <button id="play" class="w-20 h-20 bg-[#ff2d2d] rounded-full text-4xl flex items-center justify-center shadow-lg">⏯</button>
@@ -38,55 +48,55 @@
 const BASE_URL = 'https://10masari-remote.loca.lt'; 
 const APP_ID = 'ytm-remote-web';
 let token = localStorage.getItem('ytm_token') || '';
+let sleepTimeout = null;
 
 async function api(method, path, body) {
-    // We add /api/v1 here so the paths in the functions remain clean
     const url = BASE_URL.replace(/\/+$/, '') + '/api/v1' + (path.startsWith('/') ? path : '/' + path);
-    
     const opts = { 
         method, 
-        headers: { 
-            'Content-Type': 'application/json',
-            'Bypass-Tunnel-Reminder': 'true',
-            'X-Requested-With': 'XMLHttpRequest'
-        } 
+        headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' } 
     };
-    
     if (token) opts.headers['Authorization'] = token;
     if (body) opts.body = JSON.stringify(body);
-
     try {
         const res = await fetch(url, opts);
         if (res.status === 401 && path !== '/auth/requestcode') {
-            token = '';
-            localStorage.removeItem('ytm_token');
-            location.reload();
+            token = ''; localStorage.removeItem('ytm_token'); location.reload();
         }
         const t = await res.text();
         return t ? JSON.parse(t) : {};
-    } catch (e) {
-        console.error("API Error:", e);
-        throw e;
-    }
+    } catch (e) { throw e; }
 }
 
 const $ = id => document.getElementById(id);
+const cmd = c => api('POST', '/command', { command: c });
+
+// SLEEP TIMER LOGIC
+function setTimer(mins) {
+    clearTimer();
+    $('timer-status').textContent = `SLEEP TIMER: ${mins}m`;
+    $('timer-status').classList.remove('hidden');
+    $('cancel-timer').classList.remove('hidden');
+    sleepTimeout = setTimeout(() => {
+        cmd('pause');
+        clearTimer();
+    }, mins * 60000);
+}
+
+function clearTimer() {
+    if (sleepTimeout) clearTimeout(sleepTimeout);
+    $('timer-status').classList.add('hidden');
+    $('cancel-timer').classList.add('hidden');
+}
 
 $('connect-btn').onclick = async () => {
     $('status').textContent = 'Requesting pair code...';
     try {
-        const data = await api('POST', '/auth/requestcode', { 
-            appId: APP_ID, 
-            appName: 'Web Remote', 
-            appVersion: '1.0.0' 
-        });
-        
+        const data = await api('POST', '/auth/requestcode', { appId: APP_ID, appName: 'Web Remote', appVersion: '1.0.0' });
         if (data.code) {
             $('pair-code').textContent = data.code;
             $('code-display').classList.remove('hidden');
             $('connect-btn').classList.add('hidden');
-            $('status').textContent = 'Now click ALLOW on your computer';
-
             const auth = await api('POST', '/auth/request', { appId: APP_ID, code: data.code });
             if (auth.token) {
                 token = auth.token;
@@ -94,9 +104,7 @@ $('connect-btn').onclick = async () => {
                 location.reload();
             }
         }
-    } catch (e) {
-        $('status').textContent = 'Still failing? Try visiting the .lt link directly first.';
-    }
+    } catch (e) { $('status').textContent = 'Error. Visit .lt link directly.'; }
 };
 
 async function poll() {
@@ -105,22 +113,4 @@ async function poll() {
         const v = s.video || {};
         $('title').textContent = v.title || 'No song';
         $('artist').textContent = v.author || '—';
-        if (v.thumbnails?.length) $('cover').src = v.thumbnails[v.thumbnails.length-1].url;
-        setTimeout(poll, 2000);
-    } catch(e) { setTimeout(poll, 4000); }
-}
-
-if (token) {
-    $('setup-screen').classList.add('hidden');
-    $('remote-screen').classList.remove('hidden');
-    $('remote-screen').classList.add('flex');
-    poll();
-}
-
-const cmd = c => api('POST', '/command', { command: c });
-$('play').onclick = () => cmd('playPause');
-$('prev').onclick = () => cmd('previous');
-$('next').onclick = () => cmd('next');
-</script>
-</body>
-</html>
+        if (v.
