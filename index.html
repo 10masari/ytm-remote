@@ -3,114 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YTM Remote</title>
+    <title>YTM Remote Pro</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #000; color: #fff; font-family: sans-serif; overflow-x: hidden; }
+        #cover { width: 75vw; height: 75vw; max-width: 350px; max-height: 350px; transition: transform 0.3s ease; }
+        .queue-item { border-bottom: 1px solid #111; transition: background 0.2s; }
+        .queue-item:active { background: #1a1a1a; }
+        input[type=range] { -webkit-appearance: none; background: #222; height: 4px; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #ff2d2d; cursor: pointer; }
+        .custom-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+        .custom-scroll::-webkit-scrollbar { display: none; }
+    </style>
 </head>
-<body class="bg-[#0a0a0a] text-white font-sans overflow-hidden">
-    <div id="setup-screen" class="flex flex-col items-center justify-center h-screen p-8 gap-6">
-        <h1 class="text-4xl font-bold text-[#ff2d2d]">YTM Remote</h1>
-        <div class="w-full bg-[#141414] p-6 rounded-2xl border border-[#2a2a2a] text-center">
+<body class="h-screen flex flex-col">
+
+    <div id="setup-screen" class="flex flex-col items-center justify-center flex-1 p-8 gap-6">
+        <h1 class="text-3xl font-bold text-[#ff2d2d]">YTM Remote</h1>
+        <div class="w-full bg-[#111] p-6 rounded-3xl border border-[#222] text-center">
             <div id="code-display" class="hidden mb-4">
-                <p class="text-sm text-gray-400 mb-2">Click "Allow" on your computer</p>
-                <div id="pair-code" class="text-4xl font-mono font-bold tracking-widest text-[#ff2d2d]">------</div>
+                <div id="pair-code" class="text-5xl font-mono font-bold text-[#ff2d2d] tracking-tighter">------</div>
             </div>
-            <button id="connect-btn" class="w-full bg-[#ff2d2d] py-4 rounded-xl font-bold text-lg active:scale-95 transition-transform">CONNECT</button>
-            <p id="status" class="mt-4 text-sm text-gray-500 italic">Ready to pair</p>
+            <button id="connect-btn" class="w-full bg-[#ff2d2d] py-4 rounded-2xl font-bold text-lg active:scale-95">CONNECT</button>
+            <p id="status" class="mt-4 text-xs text-gray-500 italic">Ready to link</p>
         </div>
     </div>
 
-    <div id="remote-screen" class="hidden flex-col h-screen p-6 text-center">
-        <div id="timer-status" class="hidden text-[#ff2d2d] text-xs font-bold mb-2 animate-pulse">TIMER ACTIVE</div>
-        
-        <div class="flex-1 flex flex-col items-center justify-center gap-6">
-            <img id="cover" class="w-64 h-64 rounded-2xl shadow-2xl border border-gray-800" src="">
-            <div>
-                <h2 id="title" class="text-2xl font-bold truncate px-4">Not Playing</h2>
-                <p id="artist" class="text-gray-400">—</p>
+    <div id="remote-screen" class="hidden flex-col h-full">
+        <div class="flex-none pt-10 pb-6 px-8 flex flex-col items-center">
+            <img id="cover" class="rounded-2xl object-cover shadow-2xl mb-6" src="">
+            <div class="text-center w-full mb-6">
+                <h2 id="title" class="text-xl font-bold truncate">No song</h2>
+                <p id="artist" class="text-sm text-gray-400 truncate">—</p>
+            </div>
+            
+            <div class="w-full max-w-xs flex items-center gap-3 mb-8 opacity-60">
+                <span class="text-[10px]">🔈</span>
+                <input type="range" id="vol-slider" min="0" max="100" class="flex-1">
+                <span class="text-[10px]">🔊</span>
+            </div>
+
+            <div class="flex justify-between items-center w-full max-w-xs px-4 mb-4">
+                <button id="prev" class="active:scale-90"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                <button id="play" class="w-16 h-16 bg-[#ff4b4b] rounded-full flex items-center justify-center active:scale-90 shadow-lg">
+                    <svg id="play-icon" width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="pause-icon" class="hidden" width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <button id="next" class="active:scale-90"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
             </div>
         </div>
 
-        <div class="flex justify-center gap-4 mb-8">
-            <button onclick="setTimer(15)" class="text-[10px] border border-gray-700 px-3 py-1 rounded-full text-gray-400 active:bg-gray-800">15m</button>
-            <button onclick="setTimer(30)" class="text-[10px] border border-gray-700 px-3 py-1 rounded-full text-gray-400 active:bg-gray-800">30m</button>
-            <button onclick="clearTimer()" id="cancel-timer" class="hidden text-[10px] border border-[#ff2d2d] px-3 py-1 rounded-full text-[#ff2d2d]">Cancel</button>
-        </div>
-
-        <div class="flex justify-center items-center gap-10 pb-12">
-            <button id="prev" class="text-3xl">⏮</button>
-            <button id="play" class="w-20 h-20 bg-[#ff2d2d] rounded-full text-4xl flex items-center justify-center shadow-lg">⏯</button>
-            <button id="next" class="text-3xl">⏭</button>
+        <div class="flex-1 bg-[#050505] rounded-t-[32px] border-t border-[#111] overflow-hidden flex flex-col">
+            <div class="px-6 py-4 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Up Next</h3>
+                <span id="timer-display" class="text-[10px] text-[#ff2d2d] font-bold"></span>
+            </div>
+            <div id="queue-list" class="flex-1 overflow-y-auto custom-scroll px-4 pb-10">
+                </div>
         </div>
     </div>
 
 <script>
 const BASE_URL = 'https://10masari-remote.loca.lt'; 
-const APP_ID = 'ytm-remote-web';
+const APP_ID = 'ytm-remote-pro';
 let token = localStorage.getItem('ytm_token') || '';
-let sleepTimeout = null;
+let isDraggingVol = false;
 
 async function api(method, path, body) {
     const url = BASE_URL.replace(/\/+$/, '') + '/api/v1' + (path.startsWith('/') ? path : '/' + path);
-    const opts = { 
-        method, 
-        headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' } 
-    };
+    const opts = { method, headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' } };
     if (token) opts.headers['Authorization'] = token;
     if (body) opts.body = JSON.stringify(body);
-    try {
-        const res = await fetch(url, opts);
-        if (res.status === 401 && path !== '/auth/requestcode') {
-            token = ''; localStorage.removeItem('ytm_token'); location.reload();
-        }
-        const t = await res.text();
-        return t ? JSON.parse(t) : {};
-    } catch (e) { throw e; }
+    const res = await fetch(url, opts);
+    const t = await res.text();
+    return t ? JSON.parse(t) : {};
 }
 
 const $ = id => document.getElementById(id);
-const cmd = c => api('POST', '/command', { command: c });
-
-// SLEEP TIMER LOGIC
-function setTimer(mins) {
-    clearTimer();
-    $('timer-status').textContent = `SLEEP TIMER: ${mins}m`;
-    $('timer-status').classList.remove('hidden');
-    $('cancel-timer').classList.remove('hidden');
-    sleepTimeout = setTimeout(() => {
-        cmd('pause');
-        clearTimer();
-    }, mins * 60000);
-}
-
-function clearTimer() {
-    if (sleepTimeout) clearTimeout(sleepTimeout);
-    $('timer-status').classList.add('hidden');
-    $('cancel-timer').classList.add('hidden');
-}
+const cmd = (c, d) => api('POST', '/command', { command: c, data: d });
 
 $('connect-btn').onclick = async () => {
-    $('status').textContent = 'Requesting pair code...';
     try {
-        const data = await api('POST', '/auth/requestcode', { appId: APP_ID, appName: 'Web Remote', appVersion: '1.0.0' });
-        if (data.code) {
-            $('pair-code').textContent = data.code;
-            $('code-display').classList.remove('hidden');
-            $('connect-btn').classList.add('hidden');
-            const auth = await api('POST', '/auth/request', { appId: APP_ID, code: data.code });
-            if (auth.token) {
-                token = auth.token;
-                localStorage.setItem('ytm_token', token);
-                location.reload();
-            }
-        }
-    } catch (e) { $('status').textContent = 'Error. Visit .lt link directly.'; }
+        const data = await api('POST', '/auth/requestcode', { appId: APP_ID, appName: 'Web Remote Pro', appVersion: '1.0.0' });
+        $('pair-code').textContent = data.code;
+        $('code-display').classList.remove('hidden');
+        $('connect-btn').classList.add('hidden');
+        const auth = await api('POST', '/auth/request', { appId: APP_ID, code: data.code });
+        if (auth.token) { token = auth.token; localStorage.setItem('ytm_token', token); location.reload(); }
+    } catch (e) { $('status').textContent = 'Error: Check tunnel link.'; }
 };
 
 async function poll() {
     try {
         const s = await api('GET', '/state');
         const v = s.video || {};
+        const p = s.player || {};
+        
         $('title').textContent = v.title || 'No song';
         $('artist').textContent = v.author || '—';
-        if (v.
+        if (v.thumbnails?.length) $('cover').src = v.thumbnails[v.thumbnails.length-1].url;
+        
+        const isPlaying = p.trackState === 1;
+        $('play-icon').classList.toggle('hidden', isPlaying);
+        $('pause-icon').classList.toggle('hidden', !isPlaying);
+        if (!isDraggingVol) $('vol-slider').value = p.volume || 50;
+
+        // Render Queue (image_c6b100.png style)
+        if (s.queue && s.queue.length > 0) {
+            $('queue-list').innerHTML = s.queue.map((item, index) => `
+                <div class="queue-item flex items-center gap-4 py-3" onclick="cmd('setTrack', ${index})">
+                    <img src="${item.thumbnails[0]?.url}" class="w-12 h-12 rounded-lg object-cover">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-bold truncate ${item.selected ? 'text-[#ff2d2d]' : ''}">${item.title}</div>
+                        <div class="text-xs text-gray-500 truncate">${item.author}</div>
+                    </div>
+                    <div class="text-[10px] text-gray-600">${item.duration}</div>
+                </div>
+            `).join('');
+        }
+
+        setTimeout(poll, 2000);
+    } catch(e) { setTimeout(poll, 4000); }
+}
+
+if (token) {
+    $('setup-screen').classList.add('hidden');
+    $('remote-screen').classList.remove('hidden');
+    $('remote-screen').classList.add('flex');
+    poll();
+}
+
+$('play').onclick = () => cmd('playPause');
+$('prev').onclick = () => cmd('previous');
+$('next').onclick = () => cmd('next');
+$('vol-slider').oninput = () => { isDraggingVol = true; };
+$('vol-slider').onchange = (e) => { isDraggingVol = false; cmd('setVolume', parseInt(e.target.value)); };
+</script>
+</body>
+</html>
