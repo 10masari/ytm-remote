@@ -10,26 +10,20 @@
         .brand-text { color: #ff2d2d; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.875rem; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: #1e1e1e; height: 4px; border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ff2d2d; cursor: pointer; }
-        .glass-card { background: #141414; border: 1px solid #2a2a2a; border-radius: 1.5rem; }
     </style>
 </head>
 <body>
 
-    <div id="setup-screen" class="flex flex-col items-center justify-center h-screen px-8 gap-6">
+    <div id="setup-screen" class="flex flex-col items-center justify-center h-screen px-8 gap-6 text-center">
         <div class="brand-text">YTM Remote</div>
-        <h1 class="text-4xl font-bold text-center">Connect to Desktop</h1>
-        
-        <div class="glass-card w-full p-6 flex flex-col gap-4 shadow-2xl">
-            <div id="pair-code-display" class="hidden bg-[#1e1e1e] border border-[#ff2d2d] rounded-xl p-4 text-center">
+        <h1 class="text-4xl font-bold">Connect to Desktop</h1>
+        <div class="w-full max-w-sm bg-[#141414] border border-[#2a2a2a] rounded-3xl p-6 shadow-2xl">
+            <div id="pair-code-display" class="hidden bg-[#1e1e1e] border border-[#ff2d2d] rounded-xl p-4 mb-4">
                 <div id="pair-code-text" class="text-4xl font-mono font-bold text-[#ff2d2d] tracking-[0.2em]">------</div>
-                <p class="text-xs text-gray-500 mt-2">Check your computer for a popup</p>
+                <p class="text-xs text-gray-500 mt-2 tracking-tight">Check YTM Desktop for a popup!</p>
             </div>
-            
-            <p id="setup-status" class="text-sm text-center text-gray-500 italic">Ready to pair</p>
-            
-            <button id="connect-btn" class="bg-[#ff2d2d] text-white font-bold py-4 rounded-xl active:scale-95 transition-transform uppercase tracking-widest">
-                Connect Now
-            </button>
+            <p id="setup-status" class="text-sm text-gray-500 mb-4 italic">Ready to link</p>
+            <button id="connect-btn" class="w-full bg-[#ff2d2d] py-4 rounded-xl font-bold text-lg active:scale-95 transition-transform">CONNECT</button>
         </div>
     </div>
 
@@ -41,26 +35,20 @@
                 <span class="text-xs text-gray-500 uppercase">Live</span>
             </div>
         </div>
-
         <div class="relative flex-1 flex items-center justify-center p-8">
-            <div id="cover-bg" class="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 transition-all duration-700"></div>
-            <img id="cover-img" src="" class="z-10 w-full aspect-square object-cover rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#2a2a2a]">
+            <div id="cover-bg" class="absolute inset-0 bg-cover bg-center blur-3xl opacity-20"></div>
+            <img id="cover-img" src="" class="z-10 w-full aspect-square object-cover rounded-2xl shadow-2xl border border-[#2a2a2a]">
         </div>
-
         <div class="px-8 pb-12 flex flex-col gap-6">
             <div class="text-center">
                 <h2 id="track-title" class="text-2xl font-bold truncate">Nothing Playing</h2>
                 <p id="track-artist" class="text-gray-400 text-lg">—</p>
             </div>
-
             <div class="flex items-center justify-center gap-10">
                 <button id="prev-btn" class="text-3xl active:text-[#ff2d2d]">⏮</button>
-                <button id="play-btn" class="w-20 h-20 bg-[#ff2d2d] rounded-full flex items-center justify-center text-4xl shadow-lg active:scale-90 transition-transform">
-                    <span id="play-pause-icon">⏯</span>
-                </button>
+                <button id="play-btn" class="w-20 h-20 bg-[#ff2d2d] rounded-full flex items-center justify-center text-4xl shadow-lg active:scale-90 transition-transform">⏯</button>
                 <button id="next-btn" class="text-3xl active:text-[#ff2d2d]">⏭</button>
             </div>
-
             <div class="flex items-center gap-4 mt-2">
                 <span class="text-sm opacity-50">🔈</span>
                 <input type="range" id="vol-slider" min="0" max="100" value="50">
@@ -70,102 +58,80 @@
     </div>
 
 <script>
-    // --- 1. CONFIGURATION ---
-    const BASE_URL = 'https://bright-rockets-try.loca.lt'; 
+    // --- UPDATED CONFIG ---
+    const BASE_URL = 'https://ten-eggs-hide.loca.lt'; 
     const APP_ID = 'ytm-remote-web';
     let token = localStorage.getItem('ytm_token') || '';
     let isDraggingVol = false;
 
-    // --- 2. API CALLER ---
     async function api(method, path, body) {
-        // Automatically adds /api/v1 to the path
         const url = `${BASE_URL.replace(/\/+$/, '')}/api/v1${path.startsWith('/') ? path : '/' + path}`;
-        
         const opts = { 
             method, 
             headers: { 
                 'Content-Type': 'application/json',
-                'Bypass-Tunnel-Reminder': 'true' // <--- CRITICAL FIX
+                'Bypass-Tunnel-Reminder': 'true' 
             } 
         };
-        
         if (token) opts.headers['Authorization'] = token;
         if (body) opts.body = JSON.stringify(body);
 
         const res = await fetch(url, opts);
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        if (!res.ok) throw new Error(res.status);
         const text = await res.text();
         return text ? JSON.parse(text) : {};
     }
 
     const $ = id => document.getElementById(id);
 
-    // --- 3. PAIRING LOGIC ---
     $('connect-btn').onclick = async () => {
-        $('setup-status').textContent = 'Connecting...';
+        $('setup-status').textContent = 'Generating code...';
         try {
-            const { code } = await api('POST', '/auth/requestcode', { 
-                appId: APP_ID, 
-                appName: 'Web Remote', 
-                appVersion: '1.0.0' 
-            });
-            
+            const { code } = await api('POST', '/auth/requestcode', { appId: APP_ID, appName: 'Web Remote', appVersion: '1.0.0' });
             $('pair-code-text').textContent = code;
             $('pair-code-display').classList.remove('hidden');
             $('connect-btn').classList.add('hidden');
-            $('setup-status').textContent = 'Waiting for your approval...';
+            $('setup-status').textContent = 'Waiting for desktop approval...';
 
             const { token: receivedToken } = await api('POST', '/auth/request', { appId: APP_ID, code });
-            
             if (receivedToken) {
                 token = receivedToken;
                 localStorage.setItem('ytm_token', token);
                 location.reload();
             }
         } catch (e) {
-            $('setup-status').textContent = 'Failed to connect. Is YTM open?';
+            $('setup-status').textContent = 'Link error. Check PC tunnel!';
             $('connect-btn').classList.remove('hidden');
         }
     };
 
-    // --- 4. DATA POLLING ---
     async function poll() {
         try {
             const state = await api('GET', '/state');
             const v = state.video || {};
             const p = state.player || {};
-
             $('track-title').textContent = v.title || 'No Song';
             $('track-artist').textContent = v.author || '—';
-            
             if (v.thumbnails?.length) {
                 const img = v.thumbnails[v.thumbnails.length - 1].url;
                 $('cover-img').src = img;
                 $('cover-bg').style.backgroundImage = `url(${img})`;
             }
-
             if (!isDraggingVol) $('vol-slider').value = p.volume || 50;
-
             setTimeout(poll, 2000);
-        } catch (e) {
-            setTimeout(poll, 5000);
-        }
+        } catch (e) { setTimeout(poll, 5000); }
     }
 
-    // --- 5. CONTROLS ---
     const sendCmd = (c) => api('POST', '/command', { command: c }).catch(() => {});
-
     $('play-btn').onclick = () => sendCmd('playPause');
     $('prev-btn').onclick = () => sendCmd('previous');
     $('next-btn').onclick = () => sendCmd('next');
-    
     $('vol-slider').oninput = () => { isDraggingVol = true; };
     $('vol-slider').onchange = (e) => { 
         isDraggingVol = false; 
         api('POST', '/command', { command: 'setVolume', data: parseInt(e.target.value) });
     };
 
-    // Auto-start if already paired
     if (token) {
         $('setup-screen').classList.add('hidden');
         $('remote-screen').classList.remove('hidden');
