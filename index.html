@@ -4,200 +4,135 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>YTM Remote Control</title>
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0a0a">
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      colors: { brand: '#ff2d2d' },
-      fontFamily: { sans: ['sans-serif'] }
-    }
-  }
-}
-</script>
 <style>
   input[type=range] { -webkit-appearance: none; appearance: none; height: 3px; border-radius: 99px; outline: none; background: #1e1e1e; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #f0f0f0; cursor: pointer; }
-  input[type=range]::-webkit-slider-thumb:active { background: #ff2d2d; }
   .conn-pulse { animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
   .spinner { width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
-  .sheet-show { transform: translateY(0); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); }
-  .sheet-hide { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); }
 </style>
 </head>
 <body class="bg-[#0a0a0a] text-[#f0f0f0] font-sans overflow-hidden">
 
 <div id="setup-screen" class="flex flex-col items-center justify-center h-dvh px-8 gap-6">
-  <div class="text-brand text-sm tracking-[0.2em] uppercase">YTM Remote</div>
+  <div class="text-[#ff2d2d] text-sm tracking-[0.2em] uppercase">YTM Remote</div>
   <div class="text-4xl font-bold text-center leading-tight">Connect to<br>YouTube Music</div>
   <div class="w-full max-w-sm bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 flex flex-col gap-4">
-    <div id="pair-code-display" class="hidden bg-[#1e1e1e] border border-brand rounded-xl p-4 text-center">
-      <div class="text-3xl text-brand font-bold tracking-[0.3em]" id="pair-code-text">------</div>
-      <div class="text-sm text-[#888] mt-1">Click "Allow" on your Computer</div>
+    <div id="pair-code-display" class="hidden bg-[#1e1e1e] border border-[#ff2d2d] rounded-xl p-4 text-center">
+      <div class="text-3xl text-[#ff2d2d] font-bold tracking-[0.3em]" id="pair-code-text">------</div>
+      <div class="text-sm text-[#888] mt-1 text-center">Click "Allow" on your Computer</div>
     </div>
     <div class="text-sm text-center min-h-[1.4em]" id="setup-status">
-      <span class="text-[#666]">Tap Connect to begin pairing</span>
+      <span class="text-[#666]">Tap Connect to begin</span>
     </div>
-    <button id="connect-btn" class="bg-brand text-white text-lg font-bold uppercase tracking-wide rounded-xl py-3 w-full flex items-center justify-center gap-2 active:opacity-80 active:scale-[0.98] transition-all">
-      Connect
-    </button>
+    <button id="connect-btn" class="bg-[#ff2d2d] text-white text-lg font-bold uppercase tracking-wide rounded-xl py-3 w-full flex items-center justify-center gap-2 active:opacity-80 transition-all">Connect</button>
   </div>
-  <div class="text-sm text-[#666] text-center leading-relaxed">Token is stored in browser<br>for auto-login next time</div>
 </div>
 
 <div id="remote-screen" class="hidden flex-col h-dvh">
-  <div class="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a] flex-shrink-0">
-    <div class="text-brand text-sm tracking-[0.15em] uppercase">YTM Remote</div>
+  <div class="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
+    <div class="text-[#ff2d2d] text-sm tracking-[0.15em] uppercase">YTM Remote</div>
     <div class="flex items-center gap-2 text-sm text-[#666]">
       <div id="conn-dot" class="w-2 h-2 rounded-full bg-green-500 conn-pulse"></div>
-      <span id="conn-label">Connected</span>
+      <span>Connected</span>
     </div>
-    <button id="logout-btn" class="text-[#666] p-1 rounded-lg">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
   </div>
-
-  <div class="relative flex-1 min-h-0 overflow-hidden">
+  <div class="relative flex-1 flex items-center justify-center p-8 overflow-hidden">
     <div id="cover-bg" class="absolute inset-0 bg-cover bg-center scale-125 blur-[30px] brightness-[0.25] transition-all duration-500"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-8">
-      <div id="no-cover" class="w-36 h-36 bg-[#1e1e1e] rounded-2xl flex items-center justify-center text-5xl">🎵</div>
-      <img id="cover-img" src="" alt="" class="hidden max-h-full max-w-full aspect-square object-cover rounded-2xl shadow-2xl">
-    </div>
+    <img id="cover-img" src="" class="z-10 max-h-full max-w-full aspect-square object-cover rounded-2xl shadow-2xl">
   </div>
-
-  <div id="ad-banner" class="hidden mx-4 mt-2 bg-[#1a1400] border border-[#554400] rounded-xl px-3 py-2 text-sm text-[#aa8800] text-center">⚠ Advertisement Playing</div>
-
-  <div class="flex items-center justify-between px-4 pt-3 pb-1 gap-3 flex-shrink-0">
-    <div class="flex-1 overflow-hidden">
-      <div id="track-title" class="text-xl font-bold leading-tight truncate">Not Playing</div>
-      <div id="track-artist" class="text-base text-[#888] mt-0.5 truncate">—</div>
+  <div class="px-4 pt-3 pb-6 flex flex-col gap-4 bg-[#0a0a0a] z-20">
+    <div>
+      <div id="track-title" class="text-xl font-bold truncate">Not Playing</div>
+      <div id="track-artist" class="text-base text-[#888] truncate">—</div>
     </div>
-    <button id="like-btn" class="w-10 h-10 rounded-full border border-[#2a2a2a] flex items-center justify-center text-[#666] text-lg active:scale-90 transition-transform">♥</button>
-  </div>
-
-  <div class="px-4 flex flex-col gap-1 flex-shrink-0">
-    <div id="progress-wrap" class="w-full h-1 bg-[#1e1e1e] rounded-full cursor-pointer">
-      <div id="progress-fill" class="h-full bg-brand rounded-full transition-all duration-1000" style="width:0%"></div>
+    <div class="flex items-center justify-center gap-8 py-2">
+      <button id="prev-btn" class="p-2"><svg width="32" height="32" viewBox="0 0 24 24" fill="white"><polygon points="19 20 9 12 19 4 19 20"/><rect x="5" y="5" width="2" height="14"/></svg></button>
+      <button id="play-btn" class="w-16 h-16 rounded-full bg-[#ff2d2d] flex items-center justify-center shadow-lg">
+        <svg id="play-icon" width="26" height="26" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg id="pause-icon" width="26" height="26" viewBox="0 0 24 24" fill="white" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+      <button id="next-btn" class="p-2"><svg width="32" height="32" viewBox="0 0 24 24" fill="white"><polygon points="5 4 15 12 5 20 5 4"/><rect x="17" y="5" width="2" height="14"/></svg></button>
     </div>
-    <div class="flex justify-between text-xs text-[#666]">
-      <span id="time-current">0:00</span>
-      <span id="time-total">0:00</span>
+    <div class="flex items-center gap-3">
+      <span class="text-sm">🔊</span>
+      <input type="range" id="vol-slider" min="0" max="100" value="50" class="w-full">
     </div>
-  </div>
-
-  <div class="flex items-center justify-between px-4 py-4 flex-shrink-0">
-    <button id="shuffle-btn" class="text-[#f0f0f0] p-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg></button>
-    <button id="prev-btn" class="text-[#f0f0f0] p-2"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><rect x="5" y="5" width="2" height="14" rx="1"/></svg></button>
-    <button id="play-btn" class="w-16 h-16 rounded-full bg-brand flex items-center justify-center shadow-lg active:scale-95 transition-all">
-      <svg id="play-icon" width="26" height="26" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      <svg id="pause-icon" width="26" height="26" viewBox="0 0 24 24" fill="white" class="hidden"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-    </button>
-    <button id="next-btn" class="text-[#f0f0f0] p-2"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><rect x="17" y="5" width="2" height="14" rx="1"/></svg></button>
-    <button id="repeat-btn" class="text-[#f0f0f0] p-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
-  </div>
-
-  <div class="flex items-center gap-3 px-4 pb-4 flex-shrink-0">
-    <span id="vol-icon" class="text-[#666] text-lg">🔊</span>
-    <input type="range" id="vol-slider" min="0" max="100" value="50" class="w-full">
   </div>
 </div>
 
 <script>
-const APP_ID = 'ytmremoteweb';
-const APP_NAME = 'YTM Remote Web';
-const APP_VERSION = '1.0.0';
-
-// PASTE YOUR TUNNEL URL HERE
+// --- IMPORTANT: UPDATE THIS URL ---
 const BASE_URL = 'https://bright-rockets-try.loca.lt'; 
 
-let token = '';
-let currentState = null;
-let volDragging = false;
-const $ = id => document.getElementById(id);
-class ApiError extends Error { constructor(status) { super(`HTTP ${status}`); this.status = status; } }
+const APP_ID = 'ytmremoteweb';
+let token = localStorage.getItem('ytm_token') || '';
 
 async function api(method, path, body) {
-  const cleanBase = BASE_URL.replace(/\/+$/, '');
-  const cleanPath = path.startsWith('/') ? path : '/' + path;
-  const url = cleanBase + cleanPath;
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const url = BASE_URL.replace(/\/+$/, '') + (path.startsWith('/') ? path : '/' + path);
+  const opts = { 
+    method, 
+    headers: { 
+      'Content-Type': 'application/json',
+      'Bypass-Tunnel-Reminder': 'true' // <--- THIS FIXES THE "FAILED TO FETCH" ERROR
+    } 
+  };
   if (token) opts.headers['Authorization'] = token;
   if (body) opts.body = JSON.stringify(body);
+
   const res = await fetch(url, opts);
-  if (!res.ok) throw new ApiError(res.status);
+  if (!res.ok) throw new Error(`Status ${res.status}`);
   const t = await res.text();
   return t ? JSON.parse(t) : {};
 }
 
-async function cmd(command, data) {
-  return api('POST', '/api/v1/command', { command, data }).catch(() => {});
-}
+const $ = id => document.getElementById(id);
+const cmd = (command, data) => api('POST', '/api/v1/command', { command, data }).catch(() => {});
 
-$('connect-btn').addEventListener('click', async () => {
-  const btn = $('connect-btn');
-  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
-  $('setup-status').textContent = 'Connecting...';
+$('connect-btn').onclick = async () => {
+  $('setup-status').textContent = 'Requesting Code...';
   try {
-    const { code } = await api('POST', '/api/v1/auth/requestcode', { appId: APP_ID, appName: APP_NAME, appVersion: APP_VERSION });
+    const { code } = await api('POST', '/api/v1/auth/requestcode', { appId: APP_ID, appName: 'YTM Remote', appVersion: '1.0.0' });
     $('pair-code-text').textContent = code;
     $('pair-code-display').classList.remove('hidden');
-    $('setup-status').textContent = 'Waiting for desktop confirmation...';
     const { token: t } = await api('POST', '/api/v1/auth/request', { appId: APP_ID, code });
-    if (t) { token = t; localStorage.setItem('ytm_token', token); showRemote(); }
+    if (t) { token = t; localStorage.setItem('ytm_token', token); location.reload(); }
   } catch(e) { $('setup-status').textContent = 'Error: ' + e.message; }
-  finally { btn.disabled = false; btn.textContent = 'Connect'; }
-});
+};
 
-function showRemote() {
+async function poll() {
+  try {
+    const s = await api('GET', '/api/v1/state');
+    const p = s.player || {}; const v = s.video || {};
+    $('track-title').textContent = v.title || 'Not Playing';
+    $('track-artist').textContent = v.author || '—';
+    if (v.thumbnails?.length) {
+      const url = v.thumbnails[v.thumbnails.length-1].url;
+      $('cover-img').src = url;
+      $('cover-bg').style.backgroundImage = `url(${url})`;
+    }
+    const isPlaying = p.trackState === 1;
+    $('play-icon').classList.toggle('hidden', isPlaying);
+    $('pause-icon').classList.toggle('hidden', !isPlaying);
+    if (!volDragging) $('vol-slider').value = p.volume || 50;
+    setTimeout(poll, 2000);
+  } catch(e) { setTimeout(poll, 5000); }
+}
+
+if (token) {
   $('setup-screen').classList.add('hidden');
   $('remote-screen').classList.remove('hidden');
   $('remote-screen').classList.add('flex');
   poll();
 }
 
-async function poll() {
-  try {
-    const state = await api('GET', '/api/v1/state');
-    currentState = state;
-    renderState(state);
-    setTimeout(poll, 2000);
-  } catch(e) { setTimeout(poll, 5000); }
-}
-
-function renderState(s) {
-  const p = s.player || {};
-  const v = s.video || {};
-  $('track-title').textContent = v.title || 'No Track';
-  $('track-artist').textContent = v.author || '—';
-  if (v.thumbnails?.length) {
-    const url = v.thumbnails[v.thumbnails.length-1].url;
-    $('cover-img').src = url; $('cover-img').classList.remove('hidden');
-    $('cover-bg').style.backgroundImage = `url(${url})`;
-    $('no-cover').classList.add('hidden');
-  }
-  const isPlaying = p.trackState === 1;
-  $('play-icon').classList.toggle('hidden', isPlaying);
-  $('pause-icon').classList.toggle('hidden', !isPlaying);
-  if (v.durationSeconds > 0) {
-    const pct = (p.videoProgress / v.durationSeconds) * 100;
-    $('progress-fill').style.width = pct + '%';
-    $('time-current').textContent = fmt(p.videoProgress);
-    $('time-total').textContent = fmt(v.durationSeconds);
-  }
-}
-
-function fmt(s) { s = Math.floor(s || 0); return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; }
-
-$('play-btn').addEventListener('click', () => cmd('playPause'));
-$('prev-btn').addEventListener('click', () => cmd('previous'));
-$('next-btn').addEventListener('click', () => cmd('next'));
-$('vol-slider').addEventListener('change', (e) => cmd('setVolume', +e.target.value));
+$('play-btn').onclick = () => cmd('playPause');
+$('prev-btn').onclick = () => cmd('previous');
+$('next-btn').onclick = () => cmd('next');
+$('vol-slider').oninput = () => { volDragging = true; };
+$('vol-slider').onchange = (e) => { volDragging = false; cmd('setVolume', +e.target.value); };
 </script>
 </body>
 </html>
